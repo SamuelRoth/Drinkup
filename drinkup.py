@@ -39,18 +39,18 @@ worksheet = sh.sheet1 #specifices the worksheet (there's only 1 anyway)
 #get initial sheets values
 totalrows=len(worksheet.col_values(1)) #makes the variable a equal to the number of rows in the first column
 lastrowval = worksheet.cell(totalrows, 1).value #reads the value of the last row in the first column
-newrow = totalrows+1
+newrow = totalrows+1 #if I need to make a new row at the bottom of the sheet, this is the row number
 today = date.today() #grabs today's date
 lastweightime = datetime.now() #grabs current timestamp
-lastcuptime = lastweightime - timedelta(seconds=601)
+lastcuptime = lastweightime - timedelta(seconds=601) #I've placed a 10 minute hold period between weighing a new cup, effectively to avoid putting the same empty cup on multiple times. This initializes that timer, but starts it at more than 10 minutes ago so a cup can be weighed as soon as Drinkup tares.
 lastcuptimestring = str(lastcuptime)
 todaystring = str(today) #converts the date to a string
-cupsdrank = 0
+cupsdrank = 0 #variable to track how many cups have been drank today
 cupsdrankstring = str(cupsdrank)
 cuponthescale = 0 #assumes there is no cup on the scale at time of tare - this is used so that if Ash leaves a cup on the scale for more than 10 minutes, he doesn't keep getting artificial drink$
 lastdrink = datetime.now()
 
-if (lastrowval == todaystring): #on boot, checks if there's already a record for today
+if (lastrowval == todaystring): #on boot, checks if there's already a Gsheet record for today
     print("row exists for today")
     cupsonboot = worksheet.cell(totalrows, 2).value #reads the value of the cups drank in the last updated row on boot
     print(cupsonboot)
@@ -58,7 +58,7 @@ if (lastrowval == todaystring): #on boot, checks if there's already a record for
     cupsdrank = int(cupsdrankstring) #converts that cupsdrankstring value to an integer
     print(cupsdrank)
     cupsdrankstring = str(cupsdrank)
-else:
+else: #if there's not a row for today, makes one
     worksheet.update_cell(newrow, 1, todaystring)
     worksheet.update_cell(newrow, 2, cupsdrankstring)
 
@@ -197,7 +197,14 @@ while True:
 
         print("The current hour is: ")
         print(rightnow.hour)
-            
+
+        possiblystilltoday = date.today() #what's today's date?
+        if (today != possiblystilltoday): #has the date changed since the last try?
+            cupsdrank = 0 #if so, it's a new day, no cups have been drank yet
+            today = date.today() #update today
+        else: #if not, don't do anything. print a message.
+            print ("day hasn't changed")
+
         hx.power_down()
         hx.power_up()
         time.sleep(0.1)
@@ -206,4 +213,3 @@ while True:
         display.lcd_clear()
         display.backlight(0)
         cleanAndExit()
-
